@@ -12,7 +12,7 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
     let mutate_service = application::services::mutate::MutateService::new(
-        infrastructure::openai::openai_client::OpenAiClient::new(),
+        infrastructure::openai::client::OpenAiClient::new(),
     );
 
     HttpServer::new(move || {
