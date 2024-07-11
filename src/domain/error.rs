@@ -10,6 +10,8 @@ pub enum DomainError {
         entity_type: &'static str,
         user_id: String,
     },
+    #[error(transparent)]
+    InfrastructureError(anyhow::Error),
     #[error("{0}")]
     Unexpected(String),
 }
