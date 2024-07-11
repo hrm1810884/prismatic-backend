@@ -1,5 +1,6 @@
-use crate::domain::models::mutate::{MutateRequest, MutateResponse, MutateResult};
 use crate::infrastructure::openai::client::OpenAiClient;
+use crate::presentation::mutate::request::MutateRequest;
+use crate::presentation::mutate::response::{MutateResponse, MutateResult};
 
 #[derive(Clone)]
 pub struct MutateService {
