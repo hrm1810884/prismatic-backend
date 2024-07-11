@@ -1,18 +1,22 @@
 use actix_cors::Cors;
 use actix_web::{middleware, App, HttpServer};
 use dotenv::dotenv;
+use infrastructure::database::init::create_pool;
 
 mod application;
 mod domain;
 mod infrastructure;
 mod presentation;
+mod schema;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 
+    let pool = create_pool();
+
     let mutate_service = application::services::mutate::MutateService::new(
-        infrastructure::openai::client::OpenAiClient::new(),
+        infrastructure::api::openai::OpenAiClient::new(),
     );
 
     HttpServer::new(move || {

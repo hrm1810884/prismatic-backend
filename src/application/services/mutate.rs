@@ -1,4 +1,4 @@
-use crate::infrastructure::openai::client::OpenAiClient;
+use crate::infrastructure::api::openai::OpenAiClient;
 use crate::presentation::mutate::request::MutateRequest;
 use crate::presentation::mutate::response::{MutateResponse, MutateResult};
 

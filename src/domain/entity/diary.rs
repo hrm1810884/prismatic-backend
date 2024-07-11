@@ -3,7 +3,7 @@ use validator_derive::Validate;
 
 use crate::domain::error::DomainError;
 
-#[derive(Debug, Validate)]
+#[derive(Debug, Clone, PartialEq, Eq, Validate)]
 pub struct DiaryId {
     #[validate(range(min = 0, max = 4))]
     id: i32,
@@ -14,7 +14,7 @@ impl DiaryId {
     pub fn is_human(&self) -> bool { self.id == 0 }
 }
 
-#[derive(Debug, Validate)]
+#[derive(Debug, Clone, PartialEq, Eq, Validate)]
 pub struct DiaryContent {
     #[validate(length(min = 1))]
     value: Vec<String>,
@@ -26,7 +26,7 @@ impl DiaryContent {
     }
 }
 
-#[derive(Debug, Getters, Setters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Setters)]
 pub struct Diary {
     #[getset(get = "pub")]
     id: DiaryId,
