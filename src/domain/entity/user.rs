@@ -19,19 +19,19 @@ pub struct User {
     #[getset(get = "pub")]
     pub id: UserId,
     #[getset(get = "pub", set = "pub")]
-    pub human_diary: Diary,
+    pub human_diary: Option<Diary>,
     #[getset(get = "pub", set = "pub")]
-    pub ai_diary_1: Diary,
+    pub ai_diary_1: Option<Diary>,
     #[getset(get = "pub", set = "pub")]
-    pub ai_diary_2: Diary,
+    pub ai_diary_2: Option<Diary>,
     #[getset(get = "pub", set = "pub")]
-    pub ai_diary_3: Diary,
+    pub ai_diary_3: Option<Diary>,
     #[getset(get = "pub", set = "pub")]
-    pub ai_diary_4: Diary,
+    pub ai_diary_4: Option<Diary>,
     #[getset(get = "pub", set = "pub")]
-    pub is_public: bool,
+    pub is_public: Option<bool>,
     #[getset(get = "pub", set = "pub")]
-    pub favorite_id: DiaryId,
+    pub favorite_id: Option<DiaryId>,
     #[getset(get = "pub", set = "pub")]
     pub created_at: NaiveDateTime,
     #[getset(get = "pub", set = "pub")]
@@ -42,13 +42,13 @@ impl User {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: UserId,
-        human_diary: Diary,
-        ai_diary_1: Diary,
-        ai_diary_2: Diary,
-        ai_diary_3: Diary,
-        ai_diary_4: Diary,
-        is_public: bool,
-        favorite_id: DiaryId,
+        human_diary: Option<Diary>,
+        ai_diary_1: Option<Diary>,
+        ai_diary_2: Option<Diary>,
+        ai_diary_3: Option<Diary>,
+        ai_diary_4: Option<Diary>,
+        is_public: Option<bool>,
+        favorite_id: Option<DiaryId>,
         created_at: NaiveDateTime,
         updated_at: NaiveDateTime,
     ) -> Self {

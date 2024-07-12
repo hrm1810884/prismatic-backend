@@ -12,6 +12,7 @@ pub struct DiaryId {
 impl DiaryId {
     pub fn new(id: i32) -> Result<DiaryId, DomainError> { Ok(DiaryId { id }) }
     pub fn is_human(&self) -> bool { self.id == 0 }
+    pub fn to_id(&self) -> i32 { self.id }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Validate)]
@@ -24,6 +25,8 @@ impl DiaryContent {
     pub fn new(content: Vec<String>) -> Result<DiaryContent, DomainError> {
         Ok(DiaryContent { value: { content } })
     }
+    pub fn to_value(&self) -> &Vec<String> { &self.value }
+    pub fn to_json(&self) -> String { serde_json::to_string(&self.value).unwrap() }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Setters)]
