@@ -5,6 +5,7 @@ use crate::domain::entity::user::{User, UserId};
 use crate::domain::error::DomainError;
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait UserRepository: Send + Sync + 'static {
     async fn create(&self, user_id: &UserId) -> Result<(), DomainError>;
     async fn find_by_id(&self, id: &UserId) -> Result<Option<User>, DomainError>;

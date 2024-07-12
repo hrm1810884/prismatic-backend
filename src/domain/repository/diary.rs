@@ -5,6 +5,7 @@ use crate::domain::entity::user::UserId;
 use crate::domain::error::DomainError;
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait DiaryRepository: Send + Sync + 'static {
     async fn find_by_id(
         &self,

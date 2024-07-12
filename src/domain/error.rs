@@ -2,6 +2,7 @@ use thiserror::Error;
 use validator::ValidationErrors;
 
 #[derive(Debug, Error)]
+#[allow(dead_code)]
 pub enum DomainError {
     #[error("{0}")]
     Validation(String),
