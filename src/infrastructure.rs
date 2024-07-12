@@ -1,1 +1,3 @@
-pub mod openai;
+pub mod api;
+pub mod database;
+pub mod error;
