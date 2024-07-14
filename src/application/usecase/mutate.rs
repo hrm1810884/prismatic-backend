@@ -1,14 +1,24 @@
+use crate::application::error::ApplicationError;
+use crate::domain::entity::diary::{Diary, DiaryContent, DiaryId};
+use crate::domain::entity::user::UserId;
+use crate::domain::repository::user::UserRepository;
 use crate::infrastructure::api::openai::OpenAiClient;
 use crate::presentation::mutate::request::MutateRequest;
 use crate::presentation::mutate::response::{MutateResponse, MutateResult};
 
 #[derive(Clone)]
-pub struct MutateService {
+pub struct MutateUsecase<R: UserRepository> {
     client: OpenAiClient,
+    user_repository: R,
 }
 
-impl MutateService {
-    pub fn new(client: OpenAiClient) -> Self { Self { client } }
+impl<R: UserRepository> MutateUsecase<R> {
+    pub fn new(client: OpenAiClient, user_repository: R) -> Self {
+        Self {
+            client,
+            user_repository,
+        }
+    }
 
     pub async fn mutate_text(&self, req: &MutateRequest) -> MutateResponse {
         let prompts = [
@@ -19,7 +29,7 @@ impl MutateService {
         ];
 
         let window_id = req.client_id;
-        let prompt = &prompts[window_id];
+        let prompt = &prompts[window_id as usize];
         let raw_contents = req.target_text.clone();
         let mut mutated_texts = Vec::new();
 
@@ -69,6 +79,22 @@ impl MutateService {
                 mutated_length: req.mutated_length,
             },
         }
+    }
+
+    pub async fn save_diary(
+        &self,
+        user_id: &UserId,
+        diary_id: &DiaryId,
+        diary: &DiaryContent,
+    ) -> Result<(), ApplicationError> {
+        self.user_repository
+            .update_diary(
+                user_id,
+                &Diary::new(diary_id.clone(), diary.clone()).unwrap(),
+            )
+            .await?;
+
+        Ok(())
     }
 }
 

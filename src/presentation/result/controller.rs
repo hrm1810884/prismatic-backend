@@ -2,9 +2,8 @@ use actix_web::{web, HttpRequest, HttpResponse, Responder};
 
 use super::request::UpdateResultRequest;
 use crate::application::usecase::result::UpdateResultUseCase;
-use crate::auth::jwt::get_user_id_from_jwt;
+use crate::auth::jwt::get_user_id_from_req;
 use crate::domain::entity::diary::DiaryId;
-use crate::domain::entity::user::UserId;
 use crate::infrastructure::database::user::UserRepositoryImpl;
 
 pub async fn result_handler(
@@ -12,29 +11,17 @@ pub async fn result_handler(
     data: web::Data<UpdateResultUseCase<UserRepositoryImpl>>,
     body: web::Json<UpdateResultRequest>,
 ) -> impl Responder {
-    // AuthorizationヘッダーからJWTトークンを取得
-    let auth_header = req
-        .headers()
-        .get("Authorization")
-        .unwrap()
-        .to_str()
-        .unwrap();
-    let token = auth_header.trim_start_matches("Bearer ");
-
-    // JWTトークンからユーザーIDを抽出
-    let user_id = match get_user_id_from_jwt(token, b"your_secret_key") {
+    let user_id = match get_user_id_from_req(req) {
         Ok(user_id) => user_id,
         Err(_) => return HttpResponse::Unauthorized().finish(),
     };
-
-    print!("id: {}", user_id);
 
     // リクエストボディからfavorite_idを取得
     let favorite_id = DiaryId::new(body.favorite_id).unwrap();
 
     // ユースケースを実行
     match data
-        .update_result(&UserId::new(user_id).unwrap(), body.is_public, &favorite_id)
+        .update_result(&user_id, body.is_public, &favorite_id)
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Success"), // 成功時のレスポンス
@@ -95,12 +82,12 @@ mod tests {
         #[derive(Debug, Serialize, Deserialize)]
         struct Claims {
             sub: String,
-            exp: usize,
+            exp: i32,
         }
 
         let claims = Claims {
             sub: user_id.to_owned(),
-            exp: 9999999999, // 適当に大きな値を設定
+            exp: 99999999, // 適当に大きな値を設定
         };
         encode(
             &Header::default(),

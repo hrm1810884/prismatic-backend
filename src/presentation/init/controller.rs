@@ -11,7 +11,7 @@ use crate::infrastructure::database::user::UserRepositoryImpl;
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     sub: String,
-    exp: usize,
+    exp: i32,
 }
 
 pub async fn init_handler(
@@ -23,7 +23,7 @@ pub async fn init_handler(
     // JWTトークンを生成
     let claims = Claims {
         sub: user_id.clone(),
-        exp: 9999999999, // 適当に大きな値を設定
+        exp: 99999999, // 適当に大きな値を設定
     };
     let token = encode(
         &Header::default(),
