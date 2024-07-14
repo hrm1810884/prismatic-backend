@@ -13,6 +13,7 @@ use crate::infrastructure::database::init::DbPool;
 use crate::infrastructure::database::models::NewUser;
 use crate::schema::user::{self as user_schema};
 
+#[derive(Clone)]
 pub struct UserRepositoryImpl {
     pub pool: DbPool,
 }

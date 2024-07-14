@@ -4,6 +4,7 @@ use dotenv::dotenv;
 use infrastructure::database::init::create_pool;
 
 mod application;
+mod auth;
 mod domain;
 mod infrastructure;
 mod presentation;
@@ -15,13 +16,18 @@ async fn main() -> std::io::Result<()> {
 
     let pool = create_pool();
 
-    let mutate_service = application::services::mutate::MutateService::new(
+    let mutate_service = application::usecase::mutate::MutateService::new(
         infrastructure::api::openai::OpenAiClient::new(),
     );
+
+    let user_repository = infrastructure::database::user::UserRepositoryImpl::new(pool.clone());
+    let update_result_use_case =
+        application::usecase::result::UpdateResultUseCase::new(user_repository.clone());
 
     HttpServer::new(move || {
         App::new()
             .app_data(actix_web::web::Data::new(mutate_service.clone()))
+            .app_data(actix_web::web::Data::new(update_result_use_case.clone()))
             .wrap(middleware::Logger::default())
             .wrap(
                 Cors::default()
