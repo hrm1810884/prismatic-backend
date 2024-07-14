@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse, Responder};
 
-use crate::application::services::mutate::MutateService;
+use crate::application::usecase::mutate::MutateService;
 use crate::presentation::mutate::request::MutateRequest;
 use crate::presentation::mutate::response::MutateResponse;
 
