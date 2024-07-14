@@ -81,14 +81,14 @@ mod tests {
 
         App::new()
             .app_data(web::Data::new(create_user_use_case))
-            .service(web::resource("/init").route(web::post().to(init_handler)))
+            .service(web::resource("/init").route(web::get().to(init_handler)))
     }
 
     #[actix_rt::test]
     async fn test_init_handler_success() {
         let app = test::init_service(setup_test_app()).await;
 
-        let request = test::TestRequest::post().uri("/init").to_request();
+        let request = test::TestRequest::get().uri("/init").to_request();
 
         let response = test::call_service(&app, request).await;
         println!("result:{}", response.status());
