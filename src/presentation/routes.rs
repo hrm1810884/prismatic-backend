@@ -1,6 +1,6 @@
 use actix_web::web;
 
-use super::save::controller::result_handler;
+use super::result::controller::result_handler;
 use crate::presentation::mutate::controller::mutate_handler;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
