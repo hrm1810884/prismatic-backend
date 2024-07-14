@@ -32,6 +32,8 @@ pub async fn init_handler(
     )
     .unwrap();
 
+    println!("hello world");
+
     // ユースケースを実行
     match data.create_user(&UserId::new(user_id).unwrap()).await {
         Ok(_) => HttpResponse::Ok().json(InitResponse { token }), // 成功時のレスポンス

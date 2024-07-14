@@ -245,7 +245,7 @@ mod tests {
         let pool = create_test_db_pool();
         let repo = UserRepositoryImpl::new(pool);
 
-        let user_id = UserId::new("test_user_id".to_string()).unwrap();
+        let user_id = UserId::new("hogehoge".to_string()).unwrap();
 
         let result = repo.create(&user_id).await;
 

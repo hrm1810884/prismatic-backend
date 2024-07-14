@@ -6,15 +6,19 @@ edition = "2021"
 [dependencies]
 actix-cors = "0.7.0"
 actix-rt = "2.10.0"
+actix-service = "2.0.2"
 actix-web = "4"
 anyhow = "1.0.86"
 async-trait = "0.1.81"
 chrono = { version = "0.4.38", features = ["serde"] }
 diesel = { version = "2.2.1", features = ["chrono", "mysql", "r2d2"] }
 dotenv = "0.15.0"
+env_logger = "0.11.3"
 error = "0.1.9"
+futures-util = "0.3.30"
 getset = "0.1.2"
 jsonwebtoken = "9.3.0"
+log = "0.4.22"
 r2d2 = "0.8.10"
 reqwest = { version = "0.12.5", features = ["json"] }
 serde = { version = "1.0.204", features = ["derive"] }

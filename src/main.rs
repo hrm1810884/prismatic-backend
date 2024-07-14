@@ -1,18 +1,22 @@
 use actix_cors::Cors;
-use actix_web::{middleware, App, HttpServer};
+use actix_web::{middleware as actix_middleware, App, HttpServer};
 use dotenv::dotenv;
+use env_logger::Env;
 use infrastructure::database::init::create_pool;
 
 mod application;
 mod auth;
 mod domain;
 mod infrastructure;
+mod middleware;
 mod presentation;
 mod schema;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let pool = create_pool();
 
@@ -23,12 +27,16 @@ async fn main() -> std::io::Result<()> {
     let user_repository = infrastructure::database::user::UserRepositoryImpl::new(pool.clone());
     let update_result_use_case =
         application::usecase::result::UpdateResultUseCase::new(user_repository.clone());
+    let create_user_use_case =
+        application::usecase::init::CreateUserUseCase::new(user_repository.clone());
 
     HttpServer::new(move || {
         App::new()
             .app_data(actix_web::web::Data::new(mutate_service.clone()))
             .app_data(actix_web::web::Data::new(update_result_use_case.clone()))
-            .wrap(middleware::Logger::default())
+            .app_data(actix_web::web::Data::new(create_user_use_case.clone()))
+            .wrap(actix_middleware::Logger::default())
+            .wrap(middleware::Logging)
             .wrap(
                 Cors::default()
                     .allow_any_origin()
