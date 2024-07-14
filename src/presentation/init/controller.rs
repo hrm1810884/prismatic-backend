@@ -48,7 +48,6 @@ mod tests {
     use actix_web::{test, web, App};
     use diesel::r2d2::ConnectionManager;
     use diesel::MysqlConnection;
-    use serde_json::json;
 
     use super::init_handler;
     use crate::infrastructure::database::init::DbPool;
