@@ -28,6 +28,8 @@ pub fn get_user_id_from_req(req: HttpRequest) -> Result<UserId, anyhow::Error> {
         .unwrap();
     let token = auth_header.trim_start_matches("Bearer ");
 
+    println!("{}", token);
+
     // JWTトークンからユーザーIDを抽出
     let user_id = get_user_id_from_jwt(token, b"your_secret_key").unwrap();
     Ok(UserId::new(user_id).unwrap())
