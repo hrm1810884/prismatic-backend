@@ -1,13 +1,12 @@
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
-use log::error;
+use std::sync::Arc;
 
-use super::response::MutateResult;
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
+
 use crate::application::usecase::mutate::MutateUsecase;
 use crate::auth::jwt::get_user_id_from_req;
-use crate::domain::entity::diary::{Diary, DiaryContent, DiaryId};
+use crate::domain::entity::diary::DiaryContent;
 use crate::infrastructure::database::user::UserRepositoryImpl;
 use crate::presentation::mutate::request::MutateRequest;
-use crate::presentation::mutate::response::MutateResponse;
 
 pub async fn mutate_handler(
     req: HttpRequest,
@@ -19,27 +18,13 @@ pub async fn mutate_handler(
         Err(_) => return HttpResponse::Unauthorized().finish(),
     };
 
-    let target_id = DiaryId::new(body.client_id).unwrap();
+    let usecase_clone = Arc::clone(&mutate_usecase);
     let target_content = DiaryContent::new(body.target_text.clone()).unwrap();
-    let target_diary = &Diary::new(target_id.clone(), target_content).unwrap();
 
-    let result: MutateResult = mutate_usecase
-        .mutate_text(&user_id, target_diary)
-        .await
-        .unwrap();
-    let mutated_content = DiaryContent::new(result.mutated_text.clone()).unwrap();
-
-    if let Err(e) = mutate_usecase
-        .save_diary(&user_id, &target_id, &mutated_content)
-        .await
-    {
-        error!("Failed to save diary for user {}: {}", user_id.as_str(), e);
-        return HttpResponse::InternalServerError().json("Error saving diary");
+    match usecase_clone.mutate_text(&user_id, &target_content).await {
+        Ok(_) => HttpResponse::Ok().into(),
+        Err(_) => HttpResponse::InternalServerError().json("Error creating user"), // エラー時のレスポンス
     }
-
-    let response = MutateResponse { result };
-
-    HttpResponse::Ok().json(response)
 }
 
 #[cfg(test)]
@@ -130,18 +115,13 @@ mod tests {
             .uri("/mutate")
             .insert_header(("Authorization", format!("Bearer {}", token)))
             .set_json(json!({
-                "clientId": 3,
-                "targetText": ["ここに書いていく．ここにも書いてく．"],
-                "mutatedLength": 0
+                "targetText": ["ここに書いていく．ここにも書いてく．"]
             }))
             .to_request();
 
         let response = test::call_service(&app, request).await;
         println!("result:{}", response.status());
         assert!(response.status().is_success());
-
-        let response_body: serde_json::Value = test::read_body_json(response).await;
-        print!("res: {}", response_body)
     }
 
     #[actix_rt::test]
@@ -163,9 +143,6 @@ mod tests {
         let response = test::call_service(&app, request).await;
         println!("result:{}", response.status());
         assert!(response.status().is_success());
-
-        let response_body: serde_json::Value = test::read_body_json(response).await;
-        print!("res: {}", response_body)
     }
 
     // 他のテストケースも同様に追加

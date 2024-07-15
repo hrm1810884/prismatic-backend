@@ -17,13 +17,10 @@ impl OpenAiClient {
         }
     }
 
-    pub async fn post(
-        &self,
-        url: &str,
-        body: &serde_json::Value,
-    ) -> reqwest::Result<reqwest::Response> {
+    pub async fn post(&self, body: &serde_json::Value) -> reqwest::Result<reqwest::Response> {
+        let api_url = "https://api.openai.com/v1/chat/completions";
         self.client
-            .post(url)
+            .post(api_url)
             .bearer_auth(&self.api_key)
             .json(body)
             .send()
