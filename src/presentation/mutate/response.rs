@@ -12,5 +12,5 @@ pub struct MutateResult {
     #[serde(rename = "mutatedText")]
     pub mutated_text: Vec<String>,
     #[serde(rename = "mutatedLength")]
-    pub mutated_length: Option<i32>,
+    pub mutated_length: usize,
 }

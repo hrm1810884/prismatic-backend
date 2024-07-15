@@ -65,4 +65,13 @@ impl User {
             updated_at,
         }
     }
+    pub fn get_diary_by_id(self, id: &DiaryId) -> Option<Diary> {
+        match id.to_id() {
+            1 => self.ai_diary_1.clone(),
+            2 => self.ai_diary_2.clone(),
+            3 => self.ai_diary_3.clone(),
+            4 => self.ai_diary_4.clone(),
+            _ => None,
+        }
+    }
 }

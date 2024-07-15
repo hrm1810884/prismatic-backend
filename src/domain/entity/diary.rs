@@ -3,16 +3,35 @@ use validator_derive::Validate;
 
 use crate::domain::error::DomainError;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ValidDiaryId(i32);
+
+impl ValidDiaryId {
+    pub fn new(id: i32) -> Result<Self, DomainError> {
+        if (0..=4).contains(&id) {
+            Ok(ValidDiaryId(id))
+        } else {
+            Err(DomainError::Validation("invalid diary id".to_string()))
+        }
+    }
+
+    pub fn value(&self) -> i32 { self.0 }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Validate)]
 pub struct DiaryId {
-    #[validate(range(min = 0, max = 4))]
-    id: i32,
+    id: ValidDiaryId,
 }
 
 impl DiaryId {
-    pub fn new(id: i32) -> Result<DiaryId, DomainError> { Ok(DiaryId { id }) }
-    pub fn is_human(&self) -> bool { self.id == 0 }
-    pub fn to_id(&self) -> i32 { self.id }
+    pub fn new(id: i32) -> Result<DiaryId, DomainError> {
+        let valid_id = ValidDiaryId::new(id)?;
+        Ok(DiaryId { id: valid_id })
+    }
+
+    pub fn is_human(&self) -> bool { self.id.value() == 0 }
+
+    pub fn to_id(&self) -> i32 { self.id.value() }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Validate)]
