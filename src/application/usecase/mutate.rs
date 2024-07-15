@@ -97,7 +97,7 @@ impl<R: UserRepository> MutateUsecase<R> {
         self: Arc<Self>,
         user_id: &UserId,
         new_content: &DiaryContent,
-    ) -> Result<(), ApplicationError> {
+    ) -> Result<usize, ApplicationError> {
         let new_text = new_content.to_value();
 
         let user_data = match self.user_repository.find_by_id(user_id).await.unwrap() {
@@ -140,7 +140,7 @@ impl<R: UserRepository> MutateUsecase<R> {
             }
         }
 
-        Ok(())
+        Ok(new_text.len())
     }
 
     pub async fn save_diary(

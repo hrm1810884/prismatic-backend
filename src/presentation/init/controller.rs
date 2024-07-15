@@ -1,4 +1,5 @@
 use actix_web::{web, HttpResponse, Responder};
+use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -11,7 +12,7 @@ use crate::infrastructure::database::user::UserRepositoryImpl;
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     sub: String,
-    exp: i32,
+    exp: usize,
 }
 
 pub async fn init_handler(
@@ -20,17 +21,22 @@ pub async fn init_handler(
     // 新しいユーザーIDを生成
     let user_id = Uuid::new_v4().to_string();
 
-    // JWTトークンを生成
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::hours(1))
+        .expect("valid timestamp")
+        .timestamp() as usize;
+
     let claims = Claims {
-        sub: user_id.clone(),
-        exp: 99999999, // 適当に大きな値を設定
+        sub: user_id.to_owned(),
+        exp: expiration,
     };
+
     let token = encode(
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(b"your_secret_key"),
     )
-    .unwrap();
+    .expect("token creation failed");
 
     println!("hello world");
 
