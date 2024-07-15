@@ -8,7 +8,7 @@ pub struct ValidDiaryId(i32);
 
 impl ValidDiaryId {
     pub fn new(id: i32) -> Result<Self, DomainError> {
-        if (0..=3).contains(&id) {
+        if (0..=4).contains(&id) {
             Ok(ValidDiaryId(id))
         } else {
             Err(DomainError::Validation("invalid diary id".to_string()))
