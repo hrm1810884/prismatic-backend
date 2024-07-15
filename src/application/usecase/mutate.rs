@@ -26,14 +26,53 @@ impl<R: UserRepository> MutateUsecase<R> {
         }
     }
 
-    pub async fn mutate_text(&self, target_diary: &Diary) -> MutateResult {
-        let prompt = get_prompt_by_id(target_diary.id().to_id()).unwrap();
-        let raw_contents = target_diary.content().to_value();
-        let mut mutated_texts = Vec::new();
+    pub async fn mutate_text(
+        &self,
+        user_id: &UserId,
+        new_diary: &Diary,
+    ) -> Result<MutateResult, ApplicationError> {
+        let target_id = new_diary.id();
+        let prompt = get_prompt_by_id(target_id.to_id()).unwrap();
+        let new_content = new_diary.content().to_value();
+        let mut mutated_content = Vec::new();
+
+        let user_data = match self.user_repository.find_by_id(user_id).await.unwrap() {
+            Some(data) => data,
+            None => {
+                return Err(ApplicationError::NotFound {
+                    entity_type: "User",
+                    user_id: (*user_id.as_str()).to_string(),
+                });
+            },
+        };
+
+        let target_index = match &user_data.human_diary {
+            Some(old_diary) => {
+                let old_content = old_diary.content().to_value();
+                find_first_different_index(new_content, old_content)
+            },
+            None => 0,
+        };
 
         let api_url = "https://api.openai.com/v1/chat/completions";
 
-        for raw_content in raw_contents.clone() {
+        // target_indexがnew_contentの長さ以上の場合は、new_contentをそのまま返す
+        if target_index >= new_content.len() {
+            let mutated_diary = user_data.get_diary_by_id(target_id).unwrap();
+            mutated_content = mutated_diary.content().to_value()[..new_content.len()].to_vec();
+            return Ok(MutateResult {
+                raw_contents: new_content.clone(),
+                mutated_text: mutated_content.clone(),
+                mutated_length: mutated_content.len(),
+            });
+        }
+
+        for (i, raw_content) in new_content.clone().into_iter().enumerate() {
+            if i < target_index {
+                mutated_content.push(raw_content.clone());
+                continue;
+            }
+
             if !raw_content.trim().is_empty() {
                 let content = format!(
                     "{} ただし、改行は入力文そのままにすること。\n ================ \n{}",
@@ -58,23 +97,25 @@ impl<R: UserRepository> MutateUsecase<R> {
                             res_json["choices"][0]["message"]["content"].as_str()
                         {
                             let processed_text = process_output(mutated_text.to_string());
-                            mutated_texts.push(processed_text);
+                            mutated_content.push(process_output(processed_text));
                         } else {
-                            mutated_texts.push("Failed to mutate text.".to_string());
+                            mutated_content.push("Failed to mutate text.".to_string());
                         }
                     },
                     Err(_) => {
-                        mutated_texts.push("Error communicating with API.".to_string());
+                        mutated_content.push("Error communicating with API.".to_string());
                     },
                 }
+            } else {
+                mutated_content.push(raw_content.clone());
             }
         }
 
-        MutateResult {
-            raw_contents: raw_contents.clone(),
-            mutated_text: mutated_texts.clone(),
-            mutated_length: mutated_texts.len(),
-        }
+        Ok(MutateResult {
+            raw_contents: new_content.clone(),
+            mutated_text: mutated_content.clone(),
+            mutated_length: mutated_content.len(),
+        })
     }
 
     pub async fn save_diary(
@@ -102,20 +143,20 @@ fn get_prompt_by_id(id: i32) -> Option<&'static str> {
     }
 }
 
-fn find_first_different_index(new_diary: &[String], old_diary: &[String]) -> Option<usize> {
+fn find_first_different_index(new_diary: &[String], old_diary: &[String]) -> usize {
     let min_len = std::cmp::min(new_diary.len(), old_diary.len());
 
     for i in 0..min_len {
         if new_diary[i] != old_diary[i] {
-            return Some(i);
+            return i;
         }
     }
 
     if new_diary.len() != old_diary.len() {
-        return Some(min_len);
+        return min_len;
     }
 
-    None
+    new_diary.len()
 }
 
 fn process_output(input: String) -> String {

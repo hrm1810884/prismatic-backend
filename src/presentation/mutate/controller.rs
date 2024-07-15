@@ -23,7 +23,10 @@ pub async fn mutate_handler(
     let target_content = DiaryContent::new(body.target_text.clone()).unwrap();
     let target_diary = &Diary::new(target_id.clone(), target_content).unwrap();
 
-    let result: MutateResult = mutate_usecase.mutate_text(target_diary).await;
+    let result: MutateResult = mutate_usecase
+        .mutate_text(&user_id, target_diary)
+        .await
+        .unwrap();
     let mutated_content = DiaryContent::new(result.mutated_text.clone()).unwrap();
 
     if let Err(e) = mutate_usecase
@@ -118,11 +121,10 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_mutate_handler() {
-        println!("hogeeee");
+    async fn test_first_mutate_handler() {
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_user_id", b"your_secret_key");
+        let token = generate_test_jwt("test_id", b"your_secret_key");
 
         let request = test::TestRequest::post()
             .uri("/mutate")
@@ -131,6 +133,30 @@ mod tests {
                 "clientId": 3,
                 "targetText": ["ここに書いていく．ここにも書いてく．"],
                 "mutatedLength": 0
+            }))
+            .to_request();
+
+        let response = test::call_service(&app, request).await;
+        println!("result:{}", response.status());
+        assert!(response.status().is_success());
+
+        let response_body: serde_json::Value = test::read_body_json(response).await;
+        print!("res: {}", response_body)
+    }
+
+    #[actix_rt::test]
+    async fn test_second_mutate_handler() {
+        let app = test::init_service(setup_test_app()).await;
+
+        let token = generate_test_jwt("test_id", b"your_secret_key");
+
+        let request = test::TestRequest::post()
+            .uri("/mutate")
+            .insert_header(("Authorization", format!("Bearer {}", token)))
+            .set_json(json!({
+                "clientId": 3,
+                "targetText": ["ここに書いていく．ここにも書いてく．さらに書いていく．"],
+                "mutatedLength": 2
             }))
             .to_request();
 
