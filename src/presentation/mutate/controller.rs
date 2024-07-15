@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 
+use super::response::{MutateResponse, MutateResult};
 use crate::application::usecase::mutate::MutateUsecase;
 use crate::auth::jwt::get_user_id_from_req;
 use crate::domain::entity::diary::DiaryContent;
@@ -22,7 +23,11 @@ pub async fn mutate_handler(
     let target_content = DiaryContent::new(body.target_text.clone()).unwrap();
 
     match usecase_clone.mutate_text(&user_id, &target_content).await {
-        Ok(_) => HttpResponse::Ok().into(),
+        Ok(response) => HttpResponse::Ok().json(MutateResponse {
+            result: MutateResult {
+                mutated_length: response,
+            },
+        }),
         Err(_) => HttpResponse::InternalServerError().json("Error creating user"), // エラー時のレスポンス
     }
 }
