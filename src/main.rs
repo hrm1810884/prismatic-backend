@@ -20,11 +20,10 @@ async fn main() -> std::io::Result<()> {
 
     let pool = create_pool();
 
-    let mutate_service = application::usecase::mutate::MutateService::new(
-        infrastructure::api::openai::OpenAiClient::new(),
-    );
-
     let user_repository = infrastructure::database::user::UserRepositoryImpl::new(pool.clone());
+    let openai_client = infrastructure::api::openai::OpenAiClient::new();
+    let mutate_service =
+        application::usecase::mutate::MutateUsecase::new(openai_client, user_repository.clone());
     let update_result_use_case =
         application::usecase::result::UpdateResultUseCase::new(user_repository.clone());
     let create_user_use_case =
