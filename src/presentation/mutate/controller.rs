@@ -1,9 +1,10 @@
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use log::error;
 
+use super::response::MutateResult;
 use crate::application::usecase::mutate::MutateUsecase;
 use crate::auth::jwt::get_user_id_from_req;
-use crate::domain::entity::diary::{DiaryContent, DiaryId};
+use crate::domain::entity::diary::{Diary, DiaryContent, DiaryId};
 use crate::infrastructure::database::user::UserRepositoryImpl;
 use crate::presentation::mutate::request::MutateRequest;
 use crate::presentation::mutate::response::MutateResponse;
@@ -18,19 +19,22 @@ pub async fn mutate_handler(
         Err(_) => return HttpResponse::Unauthorized().finish(),
     };
 
-    let response: MutateResponse = mutate_usecase.mutate_text(&body).await;
+    let target_id = DiaryId::new(body.client_id).unwrap();
+    let target_content = DiaryContent::new(body.target_text.clone()).unwrap();
+    let target_diary = &Diary::new(target_id.clone(), target_content).unwrap();
+
+    let result: MutateResult = mutate_usecase.mutate_text(target_diary).await;
+    let mutated_content = DiaryContent::new(result.mutated_text.clone()).unwrap();
 
     if let Err(e) = mutate_usecase
-        .save_diary(
-            &user_id,
-            &DiaryId::new(body.client_id).unwrap(),
-            &DiaryContent::new(response.result.mutated_text.clone()).unwrap(),
-        )
+        .save_diary(&user_id, &target_id, &mutated_content)
         .await
     {
         error!("Failed to save diary for user {}: {}", user_id.as_str(), e);
         return HttpResponse::InternalServerError().json("Error saving diary");
     }
+
+    let response = MutateResponse { result };
 
     HttpResponse::Ok().json(response)
 }

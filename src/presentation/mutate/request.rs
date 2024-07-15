@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct MutateRequest {
     #[serde(rename = "clientId")]
     pub client_id: i32,
