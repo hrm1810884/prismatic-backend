@@ -5,6 +5,13 @@ use crate::domain::repository::user::UserRepository;
 use crate::infrastructure::api::openai::OpenAiClient;
 use crate::presentation::mutate::response::MutateResult;
 
+static PROMPTS: [&str; 4] = [
+    "入力テキストの感想・感情・意見を真逆の意味合いに書き換えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
+    "入力テキストの感想・感情・意見など主観的な部分を楽観的に書き替えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
+    "入力テキストの感想・感情・意見など主観的な部分を悲観的に書き替えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
+    "入力テキストの感想・感情・意見など主観的な部分を自己拡張的に書き替えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
+];
+
 #[derive(Clone)]
 pub struct MutateUsecase<R: UserRepository> {
     client: OpenAiClient,
@@ -20,15 +27,7 @@ impl<R: UserRepository> MutateUsecase<R> {
     }
 
     pub async fn mutate_text(&self, target_diary: &Diary) -> MutateResult {
-        let prompts = [
-            "入力テキストの感想・感情・意見を真逆の意味合いに書き換えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
-            "入力テキストの感想・感情・意見など主観的な部分を楽観的に書き替えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
-            "入力テキストの感想・感情・意見など主観的な部分を悲観的に書き替えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
-            "入力テキストの感想・感情・意見など主観的な部分を自己拡張的に書き替えてください。但し、口調・固有名詞と客観的事実は変更しないでください。",
-        ];
-
-        let window_id = target_diary.id().to_id();
-        let prompt = &prompts[window_id as usize];
+        let prompt = get_prompt_by_id(target_diary.id().to_id()).unwrap();
         let raw_contents = target_diary.content().to_value();
         let mut mutated_texts = Vec::new();
 
@@ -93,6 +92,30 @@ impl<R: UserRepository> MutateUsecase<R> {
 
         Ok(())
     }
+}
+
+fn get_prompt_by_id(id: i32) -> Option<&'static str> {
+    if id >= 0 && (id as usize) < PROMPTS.len() {
+        Some(PROMPTS[id as usize])
+    } else {
+        None
+    }
+}
+
+fn find_first_different_index(new_diary: &[String], old_diary: &[String]) -> Option<usize> {
+    let min_len = std::cmp::min(new_diary.len(), old_diary.len());
+
+    for i in 0..min_len {
+        if new_diary[i] != old_diary[i] {
+            return Some(i);
+        }
+    }
+
+    if new_diary.len() != old_diary.len() {
+        return Some(min_len);
+    }
+
+    None
 }
 
 fn process_output(input: String) -> String {
