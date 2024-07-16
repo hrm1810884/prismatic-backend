@@ -28,12 +28,15 @@ async fn main() -> std::io::Result<()> {
         application::usecase::result::UpdateResultUseCase::new(user_repository.clone());
     let create_user_use_case =
         application::usecase::init::CreateUserUseCase::new(user_repository.clone());
+    let get_diary_use_case =
+        application::usecase::diary::GetDiaryUseCase::new(user_repository.clone());
 
     HttpServer::new(move || {
         App::new()
             .app_data(actix_web::web::Data::new(mutate_service.clone()))
             .app_data(actix_web::web::Data::new(update_result_use_case.clone()))
             .app_data(actix_web::web::Data::new(create_user_use_case.clone()))
+            .app_data(actix_web::web::Data::new(get_diary_use_case.clone()))
             .wrap(actix_middleware::Logger::default())
             .wrap(middleware::Logging)
             .wrap(
@@ -45,7 +48,7 @@ async fn main() -> std::io::Result<()> {
             .configure(presentation::routes::configure)
     })
     .workers(4)
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", 9090))?
     .run()
     .await
 }
