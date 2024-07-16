@@ -1,6 +1,6 @@
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 
-use super::request::DiaryRequest;
+use super::request::DiaryRequestPath;
 use super::response::{DiaryResponse, DiaryResult};
 use crate::application::usecase::diary::GetDiaryUseCase;
 use crate::auth::jwt::get_user_id_from_req;
@@ -9,15 +9,15 @@ use crate::infrastructure::database::user::UserRepositoryImpl;
 
 pub async fn diary_handler(
     req: HttpRequest,
+    request_path: web::Path<DiaryRequestPath>,
     diary_usecase: web::Data<GetDiaryUseCase<UserRepositoryImpl>>,
-    body: web::Json<DiaryRequest>,
 ) -> impl Responder {
     let user_id = match get_user_id_from_req(req) {
         Ok(user_id) => user_id,
         Err(_) => return HttpResponse::Unauthorized().finish(),
     };
 
-    let diary_id = DiaryId::new(body.client_id).unwrap();
+    let diary_id = DiaryId::new(request_path.into_inner().client_id).unwrap();
     match diary_usecase.get_diary_by_id(&user_id, &diary_id).await {
         Ok(content) => {
             let diary = content.to_value().clone();
@@ -42,7 +42,7 @@ mod tests {
     use chrono::{Duration, Utc};
     use diesel::r2d2::ConnectionManager;
     use diesel::MysqlConnection;
-    use serde_json::{from_slice, json};
+    use serde_json::from_slice;
 
     use super::diary_handler;
     use crate::infrastructure::database::init::DbPool;
@@ -77,7 +77,7 @@ mod tests {
 
         App::new()
             .app_data(web::Data::new(get_diary_use_case))
-            .service(web::resource("/diary").route(web::post().to(diary_handler)))
+            .service(web::resource("/diary/{clientId}").route(web::get().to(diary_handler)))
     }
 
     use jsonwebtoken::{encode, EncodingKey, Header};
@@ -113,13 +113,11 @@ mod tests {
         let app = test::init_service(setup_test_app()).await;
 
         let token = generate_test_jwt("test_id", b"your_secret_key");
+        println!("hogehoge");
 
-        let request = test::TestRequest::post()
-            .uri("/diary")
+        let request = test::TestRequest::get()
+            .uri("/diary/3")
             .insert_header(("Authorization", format!("Bearer {}", token)))
-            .set_json(json!({
-                "clientId": 3
-            }))
             .to_request();
 
         let response = test::call_service(&app, request).await;

@@ -44,6 +44,12 @@ impl UserRepository for UserRepositoryImpl {
         Ok(user)
     }
 
+    async fn find_current_user(&self) -> Result<Option<User>, DomainError> {
+        let mut connection = self.get_connection()?;
+        let user = InternalUserRepository::find_current_user(&mut connection).await?;
+        Ok(user)
+    }
+
     async fn update_diary(&self, user_id: &UserId, diary: &Diary) -> Result<(), DomainError> {
         let mut connection = self.get_connection()?;
         InternalUserRepository::update_diary(user_id, diary, &mut connection).await?;
@@ -96,6 +102,89 @@ impl InternalUserRepository {
     ) -> Result<Option<User>, DomainError> {
         let user_row: Option<UserRow> = user_schema::dsl::user
             .filter(user_schema::user_id.eq(user_id.as_str()))
+            .first::<UserRow>(conn)
+            .optional()
+            .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))?;
+
+        let user: Option<User> = user_row.map(|row: UserRow| {
+            let user_id = UserId::new(row.user_id).unwrap();
+            let human_id = DiaryId::new(0).unwrap();
+            let human_diary: Option<Diary> = match row.human_diary {
+                Some(json_str) => {
+                    let array: Vec<String> = serde_json::from_str(&json_str)
+                        .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
+                        .unwrap();
+                    let content = DiaryContent::new(array).unwrap();
+                    Some(Diary::new(human_id.clone(), content).unwrap())
+                },
+                None => None,
+            };
+            let ai_diary_1: Option<Diary> = match row.ai_diary_1 {
+                Some(json_str) => {
+                    let array: Vec<String> = serde_json::from_str(&json_str)
+                        .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
+                        .unwrap();
+                    let content = DiaryContent::new(array).unwrap();
+                    Some(Diary::new(human_id.clone(), content).unwrap())
+                },
+                None => None,
+            };
+            let ai_diary_2: Option<Diary> = match row.ai_diary_2 {
+                Some(json_str) => {
+                    let array: Vec<String> = serde_json::from_str(&json_str)
+                        .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
+                        .unwrap();
+                    let content = DiaryContent::new(array).unwrap();
+                    Some(Diary::new(human_id.clone(), content).unwrap())
+                },
+                None => None,
+            };
+            let ai_diary_3: Option<Diary> = match row.ai_diary_3 {
+                Some(json_str) => {
+                    let array: Vec<String> = serde_json::from_str(&json_str)
+                        .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
+                        .unwrap();
+                    let content = DiaryContent::new(array).unwrap();
+                    Some(Diary::new(human_id.clone(), content).unwrap())
+                },
+                None => None,
+            };
+            let ai_diary_4: Option<Diary> = match row.ai_diary_4 {
+                Some(json_str) => {
+                    let array: Vec<String> = serde_json::from_str(&json_str)
+                        .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
+                        .unwrap();
+                    let content = DiaryContent::new(array).unwrap();
+                    Some(Diary::new(human_id.clone(), content).unwrap())
+                },
+                None => None,
+            };
+            let is_public = row.is_public;
+            let favorite_id = row.favorite_id.map(|id| DiaryId::new(id).unwrap());
+            let created_at = row.created_at;
+            let updated_at = row.updated_at;
+
+            User::new(
+                user_id,
+                human_diary,
+                ai_diary_1,
+                ai_diary_2,
+                ai_diary_3,
+                ai_diary_4,
+                is_public,
+                favorite_id,
+                created_at,
+                updated_at,
+            )
+        });
+        Ok(user)
+    }
+
+    pub async fn find_current_user(
+        conn: &mut MysqlConnection,
+    ) -> Result<Option<User>, DomainError> {
+        let user_row: Option<UserRow> = user_schema::dsl::user
+            .order_by(user_schema::created_at.desc())
             .first::<UserRow>(conn)
             .optional()
             .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))?;
@@ -264,6 +353,17 @@ mod tests {
 
         assert!(found_user.is_ok(), "Failed to find user: {:?}", found_user);
         assert_eq!(found_user.unwrap().unwrap().id, user_id);
+    }
+
+    #[tokio::test]
+    async fn test_find_current() {
+        let pool = create_test_db_pool();
+        let repo = UserRepositoryImpl::new(pool);
+
+        let found_user = repo.find_current_user().await;
+
+        println!("{:?}", found_user);
+        assert!(found_user.is_ok(), "Failed to find user: {:?}", found_user);
     }
 
     #[tokio::test]
