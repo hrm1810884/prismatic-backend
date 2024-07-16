@@ -1,24 +1,18 @@
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use actix_web::{web, HttpResponse, Responder};
 
 use super::request::DiaryRequestPath;
 use super::response::{DiaryResponse, DiaryResult};
 use crate::application::usecase::diary::GetDiaryUseCase;
-use crate::auth::jwt::get_user_id_from_req;
 use crate::domain::entity::diary::DiaryId;
 use crate::infrastructure::database::user::UserRepositoryImpl;
 
 pub async fn diary_handler(
-    req: HttpRequest,
     request_path: web::Path<DiaryRequestPath>,
     diary_usecase: web::Data<GetDiaryUseCase<UserRepositoryImpl>>,
 ) -> impl Responder {
-    let user_id = match get_user_id_from_req(req) {
-        Ok(user_id) => user_id,
-        Err(_) => return HttpResponse::Unauthorized().finish(),
-    };
-
     let diary_id = DiaryId::new(request_path.into_inner().client_id).unwrap();
-    match diary_usecase.get_diary_by_id(&user_id, &diary_id).await {
+
+    match diary_usecase.get_current_user_id(&diary_id).await {
         Ok(content) => {
             let diary = content.to_value().clone();
             HttpResponse::Ok().json(DiaryResponse {
@@ -39,7 +33,6 @@ mod tests {
     use actix_web::body::MessageBody;
     use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
     use actix_web::{test, web, App};
-    use chrono::{Duration, Utc};
     use diesel::r2d2::ConnectionManager;
     use diesel::MysqlConnection;
     use serde_json::from_slice;
@@ -80,45 +73,11 @@ mod tests {
             .service(web::resource("/diary/{clientId}").route(web::get().to(diary_handler)))
     }
 
-    use jsonwebtoken::{encode, EncodingKey, Header};
-    use serde::{Deserialize, Serialize};
-
-    #[derive(Debug, Serialize, Deserialize)]
-    struct Claims {
-        sub: String,
-        exp: usize,
-    }
-
-    fn generate_test_jwt(user_id: &str, secret: &[u8]) -> String {
-        let expiration = Utc::now()
-            .checked_add_signed(Duration::hours(1))
-            .expect("valid timestamp")
-            .timestamp() as usize;
-
-        let claims = Claims {
-            sub: user_id.to_owned(),
-            exp: expiration,
-        };
-
-        encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(secret),
-        )
-        .expect("token creation failed")
-    }
-
     #[actix_rt::test]
     async fn test_get_diary_handler() {
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_id", b"your_secret_key");
-        println!("hogehoge");
-
-        let request = test::TestRequest::get()
-            .uri("/diary/3")
-            .insert_header(("Authorization", format!("Bearer {}", token)))
-            .to_request();
+        let request = test::TestRequest::get().uri("/diary/3").to_request();
 
         let response = test::call_service(&app, request).await;
         println!("status:{}", response.status());
