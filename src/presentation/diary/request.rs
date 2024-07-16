@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
-pub struct DiaryRequest {
+pub struct DiaryRequestPath {
     #[serde(rename = "clientId")]
     pub client_id: i32,
 }

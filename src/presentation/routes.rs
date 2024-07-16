@@ -9,5 +9,5 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/mutate").route(web::post().to(mutate_handler)));
     cfg.service(web::resource("/result").route(web::post().to(result_handler)));
     cfg.service(web::resource("/init").route(web::get().to(init_handler)));
-    cfg.service(web::resource("/diary").route(web::get().to(diary_handler)));
+    cfg.service(web::resource("/diary/{clientId}").route(web::get().to(diary_handler)));
 }
