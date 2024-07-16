@@ -139,8 +139,7 @@ mod tests {
             .uri("/mutate")
             .insert_header(("Authorization", format!("Bearer {}", token)))
             .set_json(json!({
-                "clientId": 3,
-                "targetText": ["ここに書いていく．ここにも書いてく．さらに書いていく．"],
+                "targetText": ["ここに書いていく．","ここにも書いてく．","さらに書いていく．"],
                 "mutatedLength": 2
             }))
             .to_request();
