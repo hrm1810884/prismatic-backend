@@ -67,6 +67,12 @@ impl UserRepository for UserRepositoryImpl {
             .await?;
         Ok(())
     }
+
+    async fn delete_user(&self, id: &UserId) -> Result<(), DomainError> {
+        let mut connection = self.get_connection()?;
+        let user = InternalUserRepository::delete_user(id, &mut connection).await?;
+        Ok(user)
+    }
 }
 
 #[derive(Debug, Queryable)]
@@ -306,6 +312,16 @@ impl InternalUserRepository {
             .execute(conn)
             .map_err(|error| DomainError::InfrastructureError(anyhow::anyhow!(error)))?;
         Ok(())
+    }
+
+    pub async fn delete_user(
+        user_id: &UserId,
+        conn: &mut MysqlConnection,
+    ) -> Result<(), DomainError> {
+        diesel::delete(user_schema::dsl::user.find(user_id.as_str()))
+            .execute(conn)
+            .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
+            .map(|_| ())
     }
 }
 
