@@ -17,4 +17,5 @@ pub trait UserRepository: Send + Sync + 'static {
         is_public: bool,
         favorite_id: &DiaryId,
     ) -> Result<(), DomainError>;
+    async fn delete_user(&self, id: &UserId) -> Result<(), DomainError>;
 }

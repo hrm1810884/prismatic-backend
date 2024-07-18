@@ -30,6 +30,8 @@ async fn main() -> std::io::Result<()> {
         application::usecase::init::CreateUserUseCase::new(user_repository.clone());
     let get_diary_use_case =
         application::usecase::diary::GetDiaryUseCase::new(user_repository.clone());
+    let delete_user_use_case =
+        application::usecase::delete::DeleteUsecase::new(user_repository.clone());
 
     HttpServer::new(move || {
         App::new()
@@ -37,6 +39,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(actix_web::web::Data::new(update_result_use_case.clone()))
             .app_data(actix_web::web::Data::new(create_user_use_case.clone()))
             .app_data(actix_web::web::Data::new(get_diary_use_case.clone()))
+            .app_data(actix_web::web::Data::new(delete_user_use_case.clone()))
             .wrap(actix_middleware::Logger::default())
             .wrap(middleware::Logging)
             .wrap(
