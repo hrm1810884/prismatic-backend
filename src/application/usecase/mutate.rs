@@ -140,6 +140,10 @@ impl<R: UserRepository> MutateUsecase<R> {
             }
         }
 
+        let human_diary_id = &DiaryId::new(0).unwrap();
+        self.save_diary(user_id, human_diary_id, new_content)
+            .await?;
+
         Ok(new_text.len())
     }
 

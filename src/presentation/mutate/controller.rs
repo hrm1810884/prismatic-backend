@@ -133,7 +133,7 @@ mod tests {
     async fn test_second_mutate_handler() {
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_id", b"your_secret_key");
+        let token = generate_test_jwt("test_user_id", b"your_secret_key");
 
         let request = test::TestRequest::post()
             .uri("/mutate")
