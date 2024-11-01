@@ -37,15 +37,24 @@ impl DiaryId {
 #[derive(Debug, Clone, PartialEq, Eq, Validate)]
 pub struct DiaryContent {
     #[validate(length(min = 1))]
-    value: Vec<String>,
+    value: String,
 }
 
 impl DiaryContent {
-    pub fn new(content: Vec<String>) -> Result<DiaryContent, DomainError> {
+    pub fn new(content: String) -> Result<DiaryContent, DomainError> {
         Ok(DiaryContent { value: { content } })
     }
-    pub fn to_value(&self) -> &Vec<String> { &self.value }
+    pub fn to_value(&self) -> &String { &self.value }
+    pub fn to_str(&self) -> &str { self.value.as_str() }
     pub fn to_json(&self) -> String { serde_json::to_string(&self.value).unwrap() }
+    pub fn to_length(&self) -> i32 { self.value.chars().count() as i32 }
+    pub fn get_from(&self, nth: i32) -> String {
+        self.value.chars().skip(nth as usize).collect() // n文字目より後の文字列を取得
+    }
+
+    pub fn get_to(&self, nth: i32) -> String {
+        self.value.chars().take(nth as usize).collect() // n文字目より前の文字列を取得
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Setters)]

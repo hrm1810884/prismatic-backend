@@ -32,62 +32,70 @@ impl<R: UserRepository> MutateUsecase<R> {
     pub async fn process_mutation_by_id(
         self: Arc<Self>,
         target_id: &DiaryId,
-        target_index: usize,
+        target_index: i32,
         user_data: &User,
         new_content: &DiaryContent,
     ) -> Result<(), ApplicationError> {
         let new_text = new_content.to_value();
         let prompt = get_prompt_by_id(target_id.to_id()).unwrap();
-        let mut mutated_text = Vec::new();
+        let mut mutated_text = String::new();
 
-        if target_index >= new_text.len() {
+        if target_index >= new_content.to_length() {
+            // NOTE: 仕様上発生しないが、念のため 新しい日記の長さ以上の部分がtarget_indexに指定された場合長さだけ合わせる
             let mutated_diary = user_data.clone().get_diary_by_id(target_id).unwrap();
-            mutated_text = mutated_diary.content().to_value()[..new_text.len()].to_vec();
+            mutated_text = mutated_diary.content().get_to(new_content.to_length());
+            println!("{:?}", mutated_text);
         } else {
-            for (i, raw_text) in new_text.clone().into_iter().enumerate() {
-                if i < target_index {
-                    let mutated_diary = user_data.clone().get_diary_by_id(target_id).unwrap();
-                    mutated_text.push(mutated_diary.content().to_value()[i].clone());
-                    continue;
+            let mutated_diary = user_data
+                .clone()
+                .get_diary_by_id(target_id)
+                .unwrap_or_else(|| {
+                    Diary::new(
+                        target_id.clone(),
+                        DiaryContent::new("".to_string()).unwrap(),
+                    )
+                    .unwrap()
+                });
+            mutated_text.push_str(mutated_diary.content().to_str());
+
+            println!("{:?}", new_content.get_from(target_index));
+            if !new_text.trim().is_empty() {
+                let content = format!(
+                    "{} ただし、改行は入力文そのままにすること。\n ================ \n{}",
+                    prompt,
+                    &new_content.get_from(target_index)
+                );
+
+                let response = self
+                    .client
+                    .post(&serde_json::json!({
+                        "model": "gpt-4-turbo",
+                        "messages": [{"role": "user", "content": content}]
+                    }))
+                    .await;
+
+                match response {
+                    Ok(res) => {
+                        let res_json = res.json::<serde_json::Value>().await.unwrap();
+                        if let Some(mutated_response) =
+                            res_json["choices"][0]["message"]["content"].as_str()
+                        {
+                            let processed_text = process_output(mutated_response.to_string());
+                            print!("{:?}", processed_text);
+                            mutated_text.push_str(&process_output(processed_text));
+                        } else {
+                            mutated_text.push_str("Failed to mutate text.");
+                        }
+                    },
+                    Err(_) => {
+                        mutated_text.push_str("Error communicating with API.");
+                    },
                 }
-
-                if !raw_text.trim().is_empty() {
-                    let content = format!(
-                        "{} ただし、改行は入力文そのままにすること。\n ================ \n{}",
-                        prompt, raw_text
-                    );
-
-                    let response = self
-                        .client
-                        .post(&serde_json::json!({
-                            "model": "gpt-4-turbo",
-                            "messages": [{"role": "user", "content": content}]
-                        }))
-                        .await;
-
-                    match response {
-                        Ok(res) => {
-                            let res_json = res.json::<serde_json::Value>().await.unwrap();
-                            if let Some(mutated_response) =
-                                res_json["choices"][0]["message"]["content"].as_str()
-                            {
-                                let processed_text = process_output(mutated_response.to_string());
-                                mutated_text.push(process_output(processed_text));
-                            } else {
-                                mutated_text.push("Failed to mutate text.".to_string());
-                            }
-                        },
-                        Err(_) => {
-                            mutated_text.push("Error communicating with API.".to_string());
-                        },
-                    }
-                } else {
-                    mutated_text.push(raw_text.clone());
-                }
+            } else {
+                mutated_text.push_str(new_text);
             }
         }
 
-        println!("{:?}", mutated_text);
         let mutated_content = &DiaryContent::new(mutated_text).unwrap();
         self.save_diary(user_data.id(), target_id, mutated_content)
             .await?;
@@ -99,9 +107,7 @@ impl<R: UserRepository> MutateUsecase<R> {
         self: Arc<Self>,
         user_id: &UserId,
         new_content: &DiaryContent,
-    ) -> Result<usize, ApplicationError> {
-        let new_text = new_content.to_value();
-
+    ) -> Result<i32, ApplicationError> {
         let user_data = match self.user_repository.find_by_id(user_id).await.unwrap() {
             Some(data) => data,
             None => {
@@ -113,10 +119,7 @@ impl<R: UserRepository> MutateUsecase<R> {
         };
 
         let target_index = match &user_data.human_diary {
-            Some(old_diary) => {
-                let old_text = old_diary.content().to_value();
-                find_first_different_index(new_text, old_text)
-            },
+            Some(old_diary) => find_target_index(new_content, old_diary.content()),
             None => 0,
         };
 
@@ -146,7 +149,7 @@ impl<R: UserRepository> MutateUsecase<R> {
         self.save_diary(user_id, human_diary_id, new_content)
             .await?;
 
-        Ok(new_text.len())
+        Ok(new_content.to_length())
     }
 
     pub async fn save_diary(
@@ -174,20 +177,17 @@ fn get_prompt_by_id(id: i32) -> Option<&'static str> {
     }
 }
 
-fn find_first_different_index(new_diary: &[String], old_diary: &[String]) -> usize {
-    let min_len = std::cmp::min(new_diary.len(), old_diary.len());
+// new_contentがold_contentの部分書き換えである場合には0を返す
+// new_contentがold_contentのさらに後ろに追加されたものである場合にはold_contentの長さを返す
+fn find_target_index(new_content: &DiaryContent, old_content: &DiaryContent) -> i32 {
+    let new_text = new_content.to_value();
+    let old_text = old_content.to_value();
 
-    for i in 0..min_len {
-        if new_diary[i] != old_diary[i] {
-            return i;
-        }
+    if new_text.starts_with(old_text) {
+        old_content.to_length()
+    } else {
+        0
     }
-
-    if new_diary.len() != old_diary.len() {
-        return min_len;
-    }
-
-    new_diary.len()
 }
 
 fn process_output(input: String) -> String {

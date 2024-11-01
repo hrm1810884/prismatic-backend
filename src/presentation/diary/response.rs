@@ -8,7 +8,7 @@ pub struct DiaryResponse {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DiaryResult {
     #[serde(rename = "diary")]
-    pub diary: Vec<String>,
+    pub diary: String,
     #[serde(rename = "mutatedLength")]
-    pub mutated_length: usize,
+    pub mutated_length: i32,
 }

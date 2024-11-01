@@ -36,6 +36,7 @@ mod tests {
     use actix_web::body::MessageBody;
     use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
     use actix_web::{http, test, web, App};
+    use chrono::{Duration, Utc};
     use diesel::r2d2::ConnectionManager;
     use diesel::MysqlConnection;
     use serde_json::json;
@@ -75,26 +76,31 @@ mod tests {
             .service(web::resource("/result").route(web::post().to(result_handler)))
     }
 
-    fn generate_test_jwt(user_id: &str, secret: &[u8]) -> String {
-        use jsonwebtoken::{encode, EncodingKey, Header};
-        use serde::{Deserialize, Serialize};
+    use jsonwebtoken::{encode, EncodingKey, Header};
+    use serde::{Deserialize, Serialize};
 
-        #[derive(Debug, Serialize, Deserialize)]
-        struct Claims {
-            sub: String,
-            exp: i32,
-        }
+    #[derive(Debug, Serialize, Deserialize)]
+    struct Claims {
+        sub: String,
+        exp: usize,
+    }
+    fn generate_test_jwt(user_id: &str, secret: &[u8]) -> String {
+        let expiration = Utc::now()
+            .checked_add_signed(Duration::hours(1))
+            .expect("valid timestamp")
+            .timestamp() as usize;
 
         let claims = Claims {
             sub: user_id.to_owned(),
-            exp: 99999999, // 適当に大きな値を設定
+            exp: expiration,
         };
+
         encode(
             &Header::default(),
             &claims,
             &EncodingKey::from_secret(secret),
         )
-        .unwrap()
+        .expect("token creation failed")
     }
 
     #[actix_rt::test]
@@ -102,7 +108,7 @@ mod tests {
         println!("hogeeee");
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_user_id", b"your_secret_key");
+        let token = generate_test_jwt("3558d1e0-7997-43e5-9b2f-0a46292942c9", b"your_secret_key");
 
         let request = test::TestRequest::post()
             .uri("/result")

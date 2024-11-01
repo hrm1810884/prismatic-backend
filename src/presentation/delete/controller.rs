@@ -97,7 +97,7 @@ mod tests {
     async fn test_delete_handler() {
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_id", b"your_secret_key");
+        let token = generate_test_jwt("4ac32454-0c8d-4c3a-abef-a4dddd60415a", b"your_secret_key");
 
         let request = test::TestRequest::post()
             .uri("/delete")

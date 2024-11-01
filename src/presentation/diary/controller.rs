@@ -13,15 +13,12 @@ pub async fn diary_handler(
     let diary_id = DiaryId::new(request_path.into_inner().client_id).unwrap();
 
     match diary_usecase.get_current_user_id(&diary_id).await {
-        Ok(content) => {
-            let diary = content.to_value().clone();
-            HttpResponse::Ok().json(DiaryResponse {
-                result: DiaryResult {
-                    diary: diary.clone(),
-                    mutated_length: diary.len(),
-                },
-            })
-        },
+        Ok(content) => HttpResponse::Ok().json(DiaryResponse {
+            result: DiaryResult {
+                diary: content.to_value().clone(),
+                mutated_length: content.to_length(),
+            },
+        }),
         Err(_) => HttpResponse::InternalServerError().json("Get Diary Error"),
     }
 }
