@@ -115,56 +115,62 @@ impl InternalUserRepository {
         let user: Option<User> = user_row.map(|row: UserRow| {
             let user_id = UserId::new(row.user_id).unwrap();
             let human_id = DiaryId::new(0).unwrap();
+
             let human_diary: Option<Diary> = match row.human_diary {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
+
             let ai_diary_1: Option<Diary> = match row.ai_diary_1 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
+
             let ai_diary_2: Option<Diary> = match row.ai_diary_2 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
+
             let ai_diary_3: Option<Diary> = match row.ai_diary_3 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
+
             let ai_diary_4: Option<Diary> = match row.ai_diary_4 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
+
             let is_public = row.is_public;
             let favorite_id = row.favorite_id.map(|id| DiaryId::new(id).unwrap());
             let created_at = row.created_at;
@@ -200,50 +206,50 @@ impl InternalUserRepository {
             let human_id = DiaryId::new(0).unwrap();
             let human_diary: Option<Diary> = match row.human_diary {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
             let ai_diary_1: Option<Diary> = match row.ai_diary_1 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
             let ai_diary_2: Option<Diary> = match row.ai_diary_2 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
             let ai_diary_3: Option<Diary> = match row.ai_diary_3 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
             };
             let ai_diary_4: Option<Diary> = match row.ai_diary_4 {
                 Some(json_str) => {
-                    let array: Vec<String> = serde_json::from_str(&json_str)
+                    let text: String = serde_json::from_str(&json_str)
                         .map_err(|err| DomainError::InfrastructureError(anyhow::anyhow!(err)))
                         .unwrap();
-                    let content = DiaryContent::new(array).unwrap();
+                    let content = DiaryContent::new(text).unwrap();
                     Some(Diary::new(human_id.clone(), content).unwrap())
                 },
                 None => None,
@@ -274,7 +280,7 @@ impl InternalUserRepository {
         diary: &Diary,
         conn: &mut MysqlConnection,
     ) -> Result<(), DomainError> {
-        let target_column = match diary.id().to_id() {
+        let target_diary_column = match diary.id().to_id() {
             0 => "human_diary",
             1 => "ai_diary_1",
             2 => "ai_diary_2",
@@ -287,7 +293,10 @@ impl InternalUserRepository {
             },
         };
 
-        let query = format!("UPDATE user SET {} = ? WHERE user_id = ?", target_column);
+        let query = format!(
+            "UPDATE user SET {} = ? WHERE user_id = ?",
+            target_diary_column
+        );
 
         diesel::sql_query(query)
             .bind::<diesel::sql_types::Text, _>(&diary.content().to_json())
@@ -350,7 +359,7 @@ mod tests {
         let pool = create_test_db_pool();
         let repo = UserRepositoryImpl::new(pool);
 
-        let user_id = UserId::new("hogehoge".to_string()).unwrap();
+        let user_id = UserId::new("test_user_id".to_string()).unwrap();
 
         let result = repo.create(&user_id).await;
 
@@ -391,7 +400,7 @@ mod tests {
         // repo.create(&user_id).await.unwrap();
 
         let diary_id = DiaryId::new(1).unwrap();
-        let diary_content = DiaryContent::new(vec!["Test diary entry".to_string()]).unwrap();
+        let diary_content = DiaryContent::new("Test diary entry".to_string()).unwrap();
         let diary = Diary::new(diary_id, diary_content).unwrap();
 
         let result = repo.update_diary(&user_id, &diary).await;
