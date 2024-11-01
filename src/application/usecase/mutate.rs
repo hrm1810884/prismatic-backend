@@ -46,7 +46,8 @@ impl<R: UserRepository> MutateUsecase<R> {
         } else {
             for (i, raw_text) in new_text.clone().into_iter().enumerate() {
                 if i < target_index {
-                    mutated_text.push(raw_text.clone());
+                    let mutated_diary = user_data.clone().get_diary_by_id(target_id).unwrap();
+                    mutated_text.push(mutated_diary.content().to_value()[i].clone());
                     continue;
                 }
 
@@ -86,6 +87,7 @@ impl<R: UserRepository> MutateUsecase<R> {
             }
         }
 
+        println!("{:?}", mutated_text);
         let mutated_content = &DiaryContent::new(mutated_text).unwrap();
         self.save_diary(user_data.id(), target_id, mutated_content)
             .await?;
