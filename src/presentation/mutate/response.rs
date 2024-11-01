@@ -8,5 +8,5 @@ pub struct MutateResponse {
 #[derive(Serialize, Debug, Clone)]
 pub struct MutateResult {
     #[serde(rename = "mutatedLength")]
-    pub mutated_length: usize,
+    pub mutated_length: i32,
 }

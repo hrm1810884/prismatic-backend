@@ -114,33 +114,35 @@ mod tests {
     async fn test_first_mutate_handler() {
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_id", b"your_secret_key");
+        let token = generate_test_jwt("3558d1e0-7997-43e5-9b2f-0a46292942c9", b"your_secret_key");
 
         let request = test::TestRequest::post()
             .uri("/mutate")
             .insert_header(("Authorization", format!("Bearer {}", token)))
             .set_json(json!({
-                "targetText": ["ここに書いていく．ここにも書いてく．"]
+                "targetText": "ここに書いていく．ここにも書いてく．"
             }))
             .to_request();
 
         let response = test::call_service(&app, request).await;
         println!("result:{}", response.status());
         assert!(response.status().is_success());
+        let response_body = test::read_body(response).await;
+        let response_json: serde_json::Value = serde_json::from_slice(&response_body).unwrap();
+        assert_eq!(response_json["result"]["mutatedLength"], 18);
     }
 
     #[actix_rt::test]
     async fn test_second_mutate_handler() {
         let app = test::init_service(setup_test_app()).await;
 
-        let token = generate_test_jwt("test_user_id", b"your_secret_key");
+        let token = generate_test_jwt("0c9d6d60-3f76-4530-a1f2-1e8d015ff672", b"your_secret_key");
 
         let request = test::TestRequest::post()
             .uri("/mutate")
             .insert_header(("Authorization", format!("Bearer {}", token)))
             .set_json(json!({
-                "targetText": ["ここに書いていく．","ここにも書いてく．","さらに書いていく．"],
-                "mutatedLength": 2
+                "targetText": "ここに書いてく．ここにも書いてく．さらに書いていく．",
             }))
             .to_request();
 
