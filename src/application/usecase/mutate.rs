@@ -56,12 +56,12 @@ impl<R: UserRepository> MutateUsecase<R> {
                     )
                     .unwrap()
                 });
-            mutated_text.push_str(mutated_diary.content().to_str());
+            mutated_text.push_str(mutated_diary.content().get_to(target_index).as_str());
 
             println!("{:?}", new_content.get_from(target_index));
             if !new_text.trim().is_empty() {
                 let content = format!(
-                    "{} ただし、改行は入力文そのままにすること。\n ================ \n{}",
+                    "{} ただし、改行は入力文そのままにすること。\n また、文章が不完全であるなどの場合は書き換え可能な部分を書き換えた後、不完全な部分だけはそのままで返してください。 \n 入力に対する書き換え結果以外のシステムメッセージなどの文章は入れないでください \n ================ \n{}",
                     prompt,
                     &new_content.get_from(target_index)
                 );

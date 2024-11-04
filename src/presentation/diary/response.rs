@@ -10,5 +10,11 @@ pub struct DiaryResult {
     #[serde(rename = "diary")]
     pub diary: String,
     #[serde(rename = "mutatedLength")]
-    pub mutated_length: i32,
+    pub mutated_length: MutatedLength,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct MutatedLength {
+    pub human: i32,
+    pub ai: i32,
 }

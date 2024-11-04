@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse, Responder};
 
 use super::request::DiaryRequestPath;
-use super::response::{DiaryResponse, DiaryResult};
+use super::response::{DiaryResponse, DiaryResult, MutatedLength};
 use crate::application::usecase::diary::GetDiaryUseCase;
 use crate::domain::entity::diary::DiaryId;
 use crate::infrastructure::database::user::UserRepositoryImpl;
@@ -12,11 +12,14 @@ pub async fn diary_handler(
 ) -> impl Responder {
     let diary_id = DiaryId::new(request_path.into_inner().client_id).unwrap();
 
-    match diary_usecase.get_current_user_id(&diary_id).await {
-        Ok(content) => HttpResponse::Ok().json(DiaryResponse {
+    match diary_usecase.get_current_user_diary(&diary_id).await {
+        Ok((ai_content, human_content)) => HttpResponse::Ok().json(DiaryResponse {
             result: DiaryResult {
-                diary: content.to_value().clone(),
-                mutated_length: content.to_length(),
+                diary: ai_content.to_value().clone(),
+                mutated_length: MutatedLength {
+                    ai: ai_content.to_length(),
+                    human: human_content.to_length(),
+                },
             },
         }),
         Err(_) => HttpResponse::InternalServerError().json("Get Diary Error"),
